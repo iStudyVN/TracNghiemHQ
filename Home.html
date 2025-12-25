@@ -87,7 +87,6 @@
         .links a { color: var(--primary); cursor: pointer; text-decoration: none; font-weight: 500; }
         .links a:hover { text-decoration: underline; }
 
-        /* Bảng dữ liệu */
         #dataBox { 
             width: 100%; 
             max-width: 1200px; 
@@ -104,13 +103,7 @@
         th { background: #f1f5f9; color: var(--text-sub); font-size: 12px; font-weight: 600; text-transform: uppercase; }
         tr:hover { background: #f8fafc; }
         
-        .save-btn { 
-            background: var(--success); 
-            padding: 6px 12px; 
-            font-size: 12px; 
-            width: auto; 
-            margin: 0;
-        }
+        .save-btn { background: var(--success); padding: 6px 12px; font-size: 12px; width: auto; margin: 0; }
         .btn-logout { background: var(--error); width: auto; padding: 8px 16px; }
         .error-text { color: var(--error); font-size: 12px; margin-top: 4px; display: none; }
         .admin-badge { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
@@ -133,7 +126,7 @@
         <div class="links">
             <a onclick="toggleView('regBox')">Đăng ký mới</a>
             <span style="color: #cbd5e1; margin: 0 8px;">|</span>
-            <a onclick="alert('Vui lòng liên hệ Admin qua Zalo để hỗ trợ tài khoản.')">Liên hệ</a>
+            <a onclick="alert('Liên hệ Admin qua Zalo để hỗ trợ.')">Liên hệ</a>
         </div>
     </div>
 
@@ -165,22 +158,30 @@
             </div>
             <button class="btn-logout" onclick="location.reload()">Đăng xuất</button>
         </div>
-        
         <div class="table-wrapper">
-            <table id="mainTable">
-                <thead></thead>
-                <tbody></tbody>
-            </table>
+            <table id="mainTable"><thead></thead><tbody></tbody></table>
         </div>
     </div>
 
 <script>
-    // QUAN TRỌNG: Dán URL Web App của bạn vào đây
-    const API_URL = "https://script.google.com/macros/s/AKfycbw6_lLPAmbGKJJb7cB63HewIcn-vSFyu9GzQrPhUlWzfCd7xSOIuyNVFnHSDdkk3fuq/exec";
-    
+    let API_URL = ""; // Sẽ tải từ config.json
     let allData = [];
     let isAdmin = false;
     let currentUsername = "";
+
+    // Tải cấu hình từ GitHub ngay khi load trang
+    async function loadConfig() {
+        try {
+            const response = await fetch('config.json?v=' + new Date().getTime());
+            const config = await response.json();
+            API_URL = config.apiUrl;
+            console.log("Hệ thống sẵn sàng");
+        } catch (e) {
+            console.error("Lỗi tải config:", e);
+            alert("Lỗi: Không tìm thấy file config.json trên GitHub!");
+        }
+    }
+    window.onload = loadConfig;
 
     function toggleView(id) {
         document.querySelectorAll('.card, #dataBox').forEach(el => el.classList.add('hidden'));
@@ -190,48 +191,37 @@
     function togglePass(id) {
         const input = document.getElementById(id);
         const trigger = input.nextElementSibling;
-        if (input.type === "password") {
-            input.type = "text";
-            trigger.innerText = "Ẩn";
-        } else {
-            input.type = "password";
-            trigger.innerText = "Hiện";
-        }
+        input.type = (input.type === "password") ? "text" : "password";
+        trigger.innerText = (input.type === "password") ? "Hiện" : "Ẩn";
     }
 
     async function doRegister() {
+        if(!API_URL) return alert("Hệ thống đang tải...");
         const u = document.getElementById('regU').value.trim();
         const p = document.getElementById('regP').value;
         const p2 = document.getElementById('regP2').value;
-        const errorMsg = document.getElementById('matchError');
+        if(!u || !p || !p2) return alert("Nhập đủ thông tin!");
+        if(p !== p2) return alert("Mật khẩu không khớp!");
 
-        if(!u || !p || !p2) return alert("Vui lòng điền đầy đủ thông tin!");
-        if(p !== p2) {
-            errorMsg.style.display = "block";
-            return;
-        } else {
-            errorMsg.style.display = "none";
-        }
-        
         document.getElementById('btnReg').disabled = true;
         try {
             const res = await fetch(`${API_URL}?action=register&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}&pcname=New`);
             const txt = await res.text();
             if(txt === "Success") {
-                alert("Đăng ký thành công! Vui lòng đăng nhập.");
-                toggleView('loginBox');
+                alert("Đăng ký thành công!"); toggleView('loginBox');
             } else if(txt === "Exist") {
-                alert("Tên đăng nhập này đã tồn tại!");
+                alert("Tên đăng nhập đã tồn tại!");
             }
-        } catch(e) { alert("Lỗi kết nối máy chủ!"); }
+        } catch(e) { alert("Lỗi kết nối!"); }
         document.getElementById('btnReg').disabled = false;
     }
 
     async function doLogin() {
+        if(!API_URL) return alert("Vui lòng chờ giây lát...");
         const u = document.getElementById('user').value.trim();
         const p = document.getElementById('pass').value;
         const btn = document.getElementById('btnIn');
-        if(!u || !p) return alert("Vui lòng nhập tài khoản và mật khẩu!");
+        if(!u || !p) return alert("Nhập tài khoản và mật khẩu!");
         
         btn.disabled = true;
         btn.innerText = "Đang xử lý...";
@@ -243,21 +233,17 @@
 
             if(account) {
                 currentUsername = u;
-                // Kiểm tra cột isadmin (chấp nhận "yes", "YES", "Yes")
                 isAdmin = (account.isadmin && account.isadmin.toString().toLowerCase() === 'yes');
-                
-                // Cập nhật PC ID cho chính Username này
                 const pcID = "PC-" + Math.random().toString(36).substr(2, 6).toUpperCase();
                 await fetch(`${API_URL}?action=updatePC&username=${encodeURIComponent(u)}&pcValue=${pcID}`);
                 
-                // Cập nhật giao diện
-                document.getElementById('userDisplay').innerText = `Đang đăng nhập: ${u} | Thiết bị: ${pcID}`;
+                document.getElementById('userDisplay').innerText = `User: ${u} | Thiết bị: ${pcID}`;
                 if(isAdmin) document.getElementById('adminStatus').innerHTML = '<span class="admin-badge">ADMIN</span>';
                 
                 toggleView('dataBox');
                 renderTable(allData);
             } else {
-                alert("Tài khoản hoặc mật khẩu không chính xác!");
+                alert("Sai tài khoản hoặc mật khẩu!");
             }
         } catch(e) { alert("Lỗi tải dữ liệu!"); }
         btn.disabled = false;
@@ -267,22 +253,16 @@
     function renderTable(data) {
         const thead = document.querySelector("#mainTable thead");
         const tbody = document.querySelector("#mainTable tbody");
-        
-        // Lấy danh sách cột trừ row_index
         const headers = Object.keys(data[0]).filter(h => h !== "row_index");
         
         thead.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')} ${isAdmin ? '<th>Hành động</th>' : ''}</tr>`;
-        
         tbody.innerHTML = "";
         data.forEach(row => {
             const tr = document.createElement("tr");
             tr.dataset.rowIndex = row.row_index;
-
             headers.forEach(h => {
                 const td = document.createElement("td");
                 td.innerText = row[h] || "";
-                
-                // Nếu là Admin mới cho phép kích đúp sửa
                 if(isAdmin) {
                     td.style.cursor = "pointer";
                     td.ondblclick = function() {
@@ -294,7 +274,6 @@
                 }
                 tr.appendChild(td);
             });
-
             if(isAdmin) {
                 const actionTd = document.createElement("td");
                 actionTd.innerHTML = `<button class="save-btn hidden" onclick="saveRow(this)">Lưu</button>`;
@@ -308,34 +287,17 @@
         const tr = btn.closest("tr");
         const inputs = tr.querySelectorAll("input");
         const updateData = { row_index: tr.dataset.rowIndex };
-
-        inputs.forEach(input => {
-            updateData[input.getAttribute("data-key")] = input.value;
-        });
-
+        inputs.forEach(input => { updateData[input.getAttribute("data-key")] = input.value; });
         btn.disabled = true;
-        btn.innerText = "...";
-
         try {
-            const response = await fetch(API_URL, {
-                method: "POST",
-                body: JSON.stringify(updateData)
-            });
-            const resText = await response.text();
-            
-            if(resText.includes("Success")) {
-                inputs.forEach(input => {
-                    input.parentElement.innerText = input.value;
-                });
+            const response = await fetch(API_URL, { method: "POST", body: JSON.stringify(updateData) });
+            if((await response.text()).includes("Success")) {
+                inputs.forEach(input => { input.parentElement.innerText = input.value; });
                 btn.classList.add('hidden');
-                alert("Đã cập nhật dữ liệu!");
+                alert("Đã lưu!");
             }
-        } catch(e) {
-            alert("Lỗi khi lưu dữ liệu!");
-        } finally {
-            btn.disabled = false;
-            btn.innerText = "Lưu";
-        }
+        } catch(e) { alert("Lỗi lưu dữ liệu!"); }
+        btn.disabled = false;
     }
 </script>
 </body>
