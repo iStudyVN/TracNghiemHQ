@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Quản Trị Premium</title>
+    <style>
+        :root { 
+            --primary: #2563eb; 
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc; 
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --border: #e2e8f0;
+            --error: #ef4444;
+            --success: #22c55e;
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text-main); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            padding: 20px;
+        }
+
+        .card { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border); 
+            border-radius: 16px; 
+            padding: 32px; 
+            width: 100%; 
+            max-width: 400px; 
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        .hidden { display: none !important; }
+        h2 { text-align: center; margin-top: 0; font-size: 24px; color: var(--text-main); }
+
+        .input-group { position: relative; margin-bottom: 16px; }
+        label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text-sub); }
+        
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border); 
+            background: #ffffff; 
+            box-sizing: border-box; 
+            transition: all 0.2s;
+            font-size: 15px;
+        }
+        input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 38px;
+            font-size: 12px;
+            cursor: pointer;
+            color: var(--primary);
+            user-select: none;
+            font-weight: 600;
+        }
+
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            margin-top: 10px;
+            transition: 0.2s;
+        }
+        button:hover { background: var(--primary-hover); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .links { margin-top: 20px; text-align: center; font-size: 14px; }
+        .links a { color: var(--primary); cursor: pointer; text-decoration: none; font-weight: 500; }
+        .links a:hover { text-decoration: underline; }
+
+        /* Bảng dữ liệu */
+        #dataBox { 
+            width: 100%; 
+            max-width: 1200px; 
+            background: white; 
+            padding: 24px; 
+            border-radius: 16px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+        .table-wrapper { overflow-x: auto; margin-top: 20px; border: 1px solid var(--border); border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th, td { padding: 14px; border-bottom: 1px solid var(--border); text-align: left; }
+        th { background: #f1f5f9; color: var(--text-sub); font-size: 12px; font-weight: 600; text-transform: uppercase; }
+        tr:hover { background: #f8fafc; }
+        
+        .save-btn { 
+            background: var(--success); 
+            padding: 6px 12px; 
+            font-size: 12px; 
+            width: auto; 
+            margin: 0;
+        }
+        .btn-logout { background: var(--error); width: auto; padding: 8px 16px; }
+        .error-text { color: var(--error); font-size: 12px; margin-top: 4px; display: none; }
+        .admin-badge { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="loginBox" class="card">
+        <h2>Đăng Nhập</h2>
+        <div class="input-group">
+            <label>Tên đăng nhập</label>
+            <input type="text" id="user" placeholder="Nhập username">
+        </div>
+        <div class="input-group">
+            <label>Mật khẩu</label>
+            <input type="password" id="pass" placeholder="Nhập mật khẩu">
+            <span class="toggle-password" onclick="togglePass('pass')">Hiện</span>
+        </div>
+        <button id="btnIn" onclick="doLogin()">Tiếp tục</button>
+        <div class="links">
+            <a onclick="toggleView('regBox')">Đăng ký mới</a>
+            <span style="color: #cbd5e1; margin: 0 8px;">|</span>
+            <a onclick="alert('Vui lòng liên hệ Admin qua Zalo để hỗ trợ tài khoản.')">Liên hệ</a>
+        </div>
+    </div>
+
+    <div id="regBox" class="card hidden">
+        <h2>Đăng Ký</h2>
+        <div class="input-group">
+            <label>Tên đăng nhập mới</label>
+            <input type="text" id="regU" placeholder="Chọn tên đăng nhập">
+        </div>
+        <div class="input-group">
+            <label>Mật khẩu</label>
+            <input type="password" id="regP" placeholder="Tạo mật khẩu">
+            <span class="toggle-password" onclick="togglePass('regP')">Hiện</span>
+        </div>
+        <div class="input-group">
+            <label>Xác nhận mật khẩu</label>
+            <input type="password" id="regP2" placeholder="Nhập lại mật khẩu">
+            <p id="matchError" class="error-text">Mật khẩu không trùng khớp!</p>
+        </div>
+        <button id="btnReg" onclick="doRegister()">Xác nhận đăng ký</button>
+        <div class="links"><a onclick="toggleView('loginBox')">Quay lại đăng nhập</a></div>
+    </div>
+
+    <div id="dataBox" class="hidden">
+        <div style="display:flex; justify-content:space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h2 style="margin:0; text-align: left;">Hệ Thống Dữ Liệu <span id="adminStatus"></span></h2>
+                <small id="userDisplay" style="color: var(--text-sub)"></small>
+            </div>
+            <button class="btn-logout" onclick="location.reload()">Đăng xuất</button>
+        </div>
+        
+        <div class="table-wrapper">
+            <table id="mainTable">
+                <thead></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+<script>
+    // QUAN TRỌNG: Dán URL Web App của bạn vào đây
+    const API_URL = "https://script.google.com/macros/s/AKfycbw6_lLPAmbGKJJb7cB63HewIcn-vSFyu9GzQrPhUlWzfCd7xSOIuyNVFnHSDdkk3fuq/exec";
+    
+    let allData = [];
+    let isAdmin = false;
+    let currentUsername = "";
+
+    function toggleView(id) {
+        document.querySelectorAll('.card, #dataBox').forEach(el => el.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+    }
+
+    function togglePass(id) {
+        const input = document.getElementById(id);
+        const trigger = input.nextElementSibling;
+        if (input.type === "password") {
+            input.type = "text";
+            trigger.innerText = "Ẩn";
+        } else {
+            input.type = "password";
+            trigger.innerText = "Hiện";
+        }
+    }
+
+    async function doRegister() {
+        const u = document.getElementById('regU').value.trim();
+        const p = document.getElementById('regP').value;
+        const p2 = document.getElementById('regP2').value;
+        const errorMsg = document.getElementById('matchError');
+
+        if(!u || !p || !p2) return alert("Vui lòng điền đầy đủ thông tin!");
+        if(p !== p2) {
+            errorMsg.style.display = "block";
+            return;
+        } else {
+            errorMsg.style.display = "none";
+        }
+        
+        document.getElementById('btnReg').disabled = true;
+        try {
+            const res = await fetch(`${API_URL}?action=register&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}&pcname=New`);
+            const txt = await res.text();
+            if(txt === "Success") {
+                alert("Đăng ký thành công! Vui lòng đăng nhập.");
+                toggleView('loginBox');
+            } else if(txt === "Exist") {
+                alert("Tên đăng nhập này đã tồn tại!");
+            }
+        } catch(e) { alert("Lỗi kết nối máy chủ!"); }
+        document.getElementById('btnReg').disabled = false;
+    }
+
+    async function doLogin() {
+        const u = document.getElementById('user').value.trim();
+        const p = document.getElementById('pass').value;
+        const btn = document.getElementById('btnIn');
+        if(!u || !p) return alert("Vui lòng nhập tài khoản và mật khẩu!");
+        
+        btn.disabled = true;
+        btn.innerText = "Đang xử lý...";
+
+        try {
+            const res = await fetch(API_URL);
+            allData = await res.json();
+            const account = allData.find(x => x.username == u && x.password == p);
+
+            if(account) {
+                currentUsername = u;
+                // Kiểm tra cột isadmin (chấp nhận "yes", "YES", "Yes")
+                isAdmin = (account.isadmin && account.isadmin.toString().toLowerCase() === 'yes');
+                
+                // Cập nhật PC ID cho chính Username này
+                const pcID = "PC-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+                await fetch(`${API_URL}?action=updatePC&username=${encodeURIComponent(u)}&pcValue=${pcID}`);
+                
+                // Cập nhật giao diện
+                document.getElementById('userDisplay').innerText = `Đang đăng nhập: ${u} | Thiết bị: ${pcID}`;
+                if(isAdmin) document.getElementById('adminStatus').innerHTML = '<span class="admin-badge">ADMIN</span>';
+                
+                toggleView('dataBox');
+                renderTable(allData);
+            } else {
+                alert("Tài khoản hoặc mật khẩu không chính xác!");
+            }
+        } catch(e) { alert("Lỗi tải dữ liệu!"); }
+        btn.disabled = false;
+        btn.innerText = "Tiếp tục";
+    }
+
+    function renderTable(data) {
+        const thead = document.querySelector("#mainTable thead");
+        const tbody = document.querySelector("#mainTable tbody");
+        
+        // Lấy danh sách cột trừ row_index
+        const headers = Object.keys(data[0]).filter(h => h !== "row_index");
+        
+        thead.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')} ${isAdmin ? '<th>Hành động</th>' : ''}</tr>`;
+        
+        tbody.innerHTML = "";
+        data.forEach(row => {
+            const tr = document.createElement("tr");
+            tr.dataset.rowIndex = row.row_index;
+
+            headers.forEach(h => {
+                const td = document.createElement("td");
+                td.innerText = row[h] || "";
+                
+                // Nếu là Admin mới cho phép kích đúp sửa
+                if(isAdmin) {
+                    td.style.cursor = "pointer";
+                    td.ondblclick = function() {
+                        if(this.querySelector("input")) return;
+                        const oldVal = this.innerText;
+                        this.innerHTML = `<input type="text" value="${oldVal}" data-key="${h}" style="width:100%; padding:4px;">`;
+                        tr.querySelector(".save-btn").classList.remove('hidden');
+                    };
+                }
+                tr.appendChild(td);
+            });
+
+            if(isAdmin) {
+                const actionTd = document.createElement("td");
+                actionTd.innerHTML = `<button class="save-btn hidden" onclick="saveRow(this)">Lưu</button>`;
+                tr.appendChild(actionTd);
+            }
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function saveRow(btn) {
+        const tr = btn.closest("tr");
+        const inputs = tr.querySelectorAll("input");
+        const updateData = { row_index: tr.dataset.rowIndex };
+
+        inputs.forEach(input => {
+            updateData[input.getAttribute("data-key")] = input.value;
+        });
+
+        btn.disabled = true;
+        btn.innerText = "...";
+
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify(updateData)
+            });
+            const resText = await response.text();
+            
+            if(resText.includes("Success")) {
+                inputs.forEach(input => {
+                    input.parentElement.innerText = input.value;
+                });
+                btn.classList.add('hidden');
+                alert("Đã cập nhật dữ liệu!");
+            }
+        } catch(e) {
+            alert("Lỗi khi lưu dữ liệu!");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Lưu";
+        }
+    }
+</script>
+</body>
+</html>
